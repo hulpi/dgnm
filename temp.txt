@@ -1,0 +1,55 @@
+4792/4=1198
+3436/4=859
+yuzuotian/yzt915580
+mfnm&dbyzt915580
+
+www.dnsmsn.com
+dgnm168.com
+Mfnm&dbyzt915580
+
+
+1112
+
+WinRM                 Windows Remote Management
+NlaSvc                Network Location Awareness 如有网络共享或ICS/ICF，可能需要（服务器端）客户机降低PF测试，此时需要启动该服务
+LanmanWorkstation     LanmanWorkstation   共享和联机访问时需要使用
+Dnscache              DNS Client
+CryptSvc              Cryptographic Services 认证服务
+
+2440
+
+select t2.education, t1.dept_id, count(t1.id) 
+from ew_hr_employee t1, ew_hr_education t2 
+where  t1.id = t2.employee_id and t1.company_id = '1' 
+group by t2.education, t1.dept_id ;
+
+select t2.education, t3.department_name as department, count(t1.id) as number 
+from ew_hr_employee t1 left join ew_hr_education t2 on t1.id = t2.employee_id 
+left join ew_fw_department t3 on t1.dept_id = t3.id
+where t1.company_id = '1' 
+group by t2.education, t3.department_name;
+
+
+select  
+    id,  
+    DATE_FORMAT(BIRTH_DATE,"%Y-%m-%d") birthday,  
+    CURDATE() ,  
+    (year(now())-year(BIRTH_DATE)-1) + ( DATE_FORMAT(BIRTH_DATE, '%m%d') <= DATE_FORMAT(NOW(), '%m%d') ) as age  
+from  
+    ew_hr_employee t1 where t1.company_id = '5' ;  
+	
+
+select nnd as '年龄段', department_name, count(*) as '人数' from(  
+ select   
+ case  
+  when (year(now())-year(BIRTH_DATE)-1) + ( DATE_FORMAT(BIRTH_DATE, '%m%d') <= DATE_FORMAT(NOW(), '%m%d') )>=1 and (year(now())-year(BIRTH_DATE)-1) + ( DATE_FORMAT(BIRTH_DATE, '%m%d') <= DATE_FORMAT(NOW(), '%m%d') )<30 then '小于30'  
+  when (year(now())-year(BIRTH_DATE)-1) + ( DATE_FORMAT(BIRTH_DATE, '%m%d') <= DATE_FORMAT(NOW(), '%m%d') )>=30 and (year(now())-year(BIRTH_DATE)-1) + ( DATE_FORMAT(BIRTH_DATE, '%m%d') <= DATE_FORMAT(NOW(), '%m%d') )<=40 then '30-40'  
+  when (year(now())-year(BIRTH_DATE)-1) + ( DATE_FORMAT(BIRTH_DATE, '%m%d') <= DATE_FORMAT(NOW(), '%m%d') )>=41 and (year(now())-year(BIRTH_DATE)-1) + ( DATE_FORMAT(BIRTH_DATE, '%m%d') <= DATE_FORMAT(NOW(), '%m%d') )<=50 then '41-50'  
+  when (year(now())-year(BIRTH_DATE)-1) + ( DATE_FORMAT(BIRTH_DATE, '%m%d') <= DATE_FORMAT(NOW(), '%m%d') )>=51 then '大于50'   
+ end   
+ as nnd,EMPLOYEE_NAME, t2.department_name from ew_hr_employee t1, ew_fw_department t2 where t1.dept_id = t2.id and t1.company_id = '5' 
+)a group by nnd, department_name;
+
+
+
+
