@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<definitions id="definitions" 
+             targetNamespace="http://activiti.org/bpmn20" 
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+             xmlns:activiti="http://activiti.org/bpmn"> 
+ 
+  <process id="financialDailyExpenseFlow" name="日常报销单流程"> 
+ 
+    <startEvent id="request"></startEvent> 
+
+    <sequenceFlow id="flow1" sourceRef="request" targetRef="delegateDecision" /> 
+    
+    <exclusiveGateway id="delegateDecision" name="跨部门判断" />
+    <sequenceFlow id="delegateDecisionFlow1" sourceRef="delegateDecision" targetRef="applicantTask"> 
+      <conditionExpression xsi:type="tFormalExpression">${WF_IS_DELEGATE == 'Y'}</conditionExpression> 
+    </sequenceFlow> 
+     <sequenceFlow id="delegateDecisionFlow2" sourceRef="delegateDecision" targetRef="taskOne"> 
+      <conditionExpression xsi:type="tFormalExpression">${WF_IS_DELEGATE == 'N'}</conditionExpression> 
+    </sequenceFlow> 
+ 
+    <!--费用承担部门主管审批 -->
+ 	<userTask id="applicantTask" name="费用承担部门主管审批" activiti:assignee="${WF_DELEGATE_USERID}"></userTask>
+ 	
+ 	<sequenceFlow id="applicantTaskFlow1" sourceRef="applicantTask" targetRef="taskOne" /> 
+ 
+ 	<!-- 直管副总审批 -->
+    <userTask id="taskOne" name="部门直管副总审批" > 
+		<extensionElements> 
+			<activiti:taskListener event="create" class="com.yulong.ew.workflow.activiti.taskAssignment.DeptDominationHandler" /> 
+		</extensionElements> 
+    </userTask>
+
+    <sequenceFlow id="flow2" sourceRef="taskOne" targetRef="resendRequestDecision" /> 
+    
+    <exclusiveGateway id="resendRequestDecision" name="Resend request" />
+    <sequenceFlow id="flow7" sourceRef="resendRequestDecision" targetRef="accountingAuditApprove"> 
+      	<conditionExpression xsi:type="tFormalExpression">${resendRequest == 1}</conditionExpression> 
+    </sequenceFlow> 
+    <sequenceFlow id="flow8" sourceRef="resendRequestDecision" targetRef="theEnd1"> 
+      	<conditionExpression xsi:type="tFormalExpression">${resendRequest == 2}</conditionExpression> 
+    </sequenceFlow>
+	
+	 <!-- 审核会计审批 -->
+    <userTask id="accountingAuditApprove" name="审核会计审批" activiti:assignee="${ldapService.getFwRoleUserId(WF_APPLICANT_ID ,'审核会计')}"></userTask>
+
+	<sequenceFlow id="accountingAuditApproveFlow1" sourceRef="accountingAuditApprove" targetRef="accountingAuditApproveDecision" /> 
+    
+    <exclusiveGateway id="accountingAuditApproveDecision" name="审核会计审批结果判断" />
+    
+    <sequenceFlow id="accountingAuditApproveFlow2" sourceRef="accountingAuditApproveDecision" targetRef="generalManagerApprove"> 
+    	<conditionExpression xsi:type="tFormalExpression">${resendRequest == 1}</conditionExpression> 
+    </sequenceFlow> 
+    <sequenceFlow id="accountingAuditApproveFlow3" sourceRef="accountingAuditApproveDecision" targetRef="theEnd1"> 
+      	<conditionExpression xsi:type="tFormalExpression">${resendRequest == 2}</conditionExpression> 
+    </sequenceFlow>
+    
+    <!-- 总经理审批 -->
+    <userTask id="generalManagerApprove" name="总经理审批" activiti:assignee="${ldapService.getFwRoleUserId(WF_APPLICANT_ID ,'总经理')}"></userTask>
+    
+    <sequenceFlow id="generalManagerApproveFlow1" sourceRef="generalManagerApprove" targetRef="generalManagerApproveDecision" /> 
+    
+    <exclusiveGateway id="generalManagerApproveDecision" name="总经理审批结果判断" />
+    
+    <sequenceFlow id="generalManagerApproveFlow2" sourceRef="generalManagerApproveDecision" targetRef="financialDirectorApprove"> 
+    	<conditionExpression xsi:type="tFormalExpression">${resendRequest == 1}</conditionExpression> 
+    </sequenceFlow> 
+    <sequenceFlow id="generalManagerApproveFlow3" sourceRef="generalManagerApproveDecision" targetRef="theEnd1"> 
+      	<conditionExpression xsi:type="tFormalExpression">${resendRequest == 2}</conditionExpression> 
+    </sequenceFlow>
+    
+   
+    
+    <!-- 内审部经理审核 -->
+    <userTask id="financialDirectorApprove" name="内审部经理审批" activiti:assignee="${ldapService.getFwRoleUserId(WF_APPLICANT_ID ,'内审部经理')}"></userTask>
+
+	<sequenceFlow id="financialDirectorApproveFlow1" sourceRef="financialDirectorApprove" targetRef="financialDirectorApproveDecision" /> 
+    
+    <exclusiveGateway id="financialDirectorApproveDecision" name="内审部经理审批结果判断" />
+    
+    <sequenceFlow id="financialDirectorApproveFlow2" sourceRef="financialDirectorApproveDecision" targetRef="cashierApprove"> 
+    	<conditionExpression xsi:type="tFormalExpression">${resendRequest == 1}</conditionExpression> 
+    </sequenceFlow> 
+    <sequenceFlow id="financialDirectorApproveFlow3" sourceRef="financialDirectorApproveDecision" targetRef="theEnd1"> 
+      	<conditionExpression xsi:type="tFormalExpression">${resendRequest == 2}</conditionExpression> 
+    </sequenceFlow>
+    
+    <!-- 出纳签收 -->
+    <userTask id="cashierApprove" name="财务出纳签收" activiti:assignee="${ldapService.getFwRoleUserId(WF_APPLICANT_ID ,'财务出纳')}"></userTask>
+	
+    <sequenceFlow id="flow3" sourceRef="cashierApprove" targetRef="theEnd1">
+    </sequenceFlow> 
+
+    <endEvent id="theEnd1"></endEvent> 
+ 
+  </process> 
+ 
+</definitions> 
+
